@@ -76,6 +76,36 @@ protected:
     }
 };
 
+class DividePythonDivPostOpCPUTest : public testing::WithParamInterface<bool>, public SubgraphBaseTest {
+protected:
+    void SetUp() override {
+        targetDevice = ov::test::utils::DEVICE_CPU;
+        const bool pythondiv = GetParam();
+        init_input_shapes({InputShape{{8}, {{8}}}, InputShape{{8}, {{8}}}});
+
+        ov::ParameterVector parameters;
+        for (const auto& shape : inputDynamicShapes) {
+            parameters.push_back(std::make_shared<ov::op::v0::Parameter>(ov::element::i32, shape));
+        }
+
+        auto add =
+            std::make_shared<ov::op::v1::Add>(parameters[0], ov::op::v0::Constant::create(ov::element::i32, {1}, {1}));
+        auto divide = std::make_shared<ov::op::v1::Divide>(add, parameters[1], pythondiv);
+        function = std::make_shared<ov::Model>(ov::OutputVector{divide}, parameters, "DividePythonDivPostOp");
+    }
+
+    void generate_inputs(const std::vector<ov::Shape>& targetInputStaticShapes) override {
+        static constexpr std::array<std::array<int32_t, 8>, 2> values = {
+            {{-7, -6, -5, 5, 6, -6, 12, -12}, {3, 3, 3, 3, 3, 3, 3, 3}}};
+        const auto& modelInputs = function->inputs();
+        for (size_t i = 0; i < modelInputs.size(); ++i) {
+            ov::Tensor tensor(ov::element::i32, targetInputStaticShapes[i]);
+            std::copy(values[i].begin(), values[i].end(), tensor.data<int32_t>());
+            inputs.insert({modelInputs[i].get_node_shared_ptr(), tensor});
+        }
+    }
+};
+
 TEST_P(DividePythonDivCPUTest, CompareWithRefs) {
     run();
 }
@@ -93,6 +123,17 @@ TEST_P(DividePythonDivFusedCPUTest, CompareWithRefs) {
 
 INSTANTIATE_TEST_SUITE_P(smoke_IntegerDivide,
                          DividePythonDivFusedCPUTest,
+                         testing::Values(false, true),
+                         [](const testing::TestParamInfo<bool>& info) {
+                             return info.param ? "PythonDiv" : "TruncateDiv";
+                         });
+
+TEST_P(DividePythonDivPostOpCPUTest, CompareWithRefs) {
+    run();
+}
+
+INSTANTIATE_TEST_SUITE_P(smoke_IntegerDivide,
+                         DividePythonDivPostOpCPUTest,
                          testing::Values(false, true),
                          [](const testing::TestParamInfo<bool>& info) {
                              return info.param ? "PythonDiv" : "TruncateDiv";

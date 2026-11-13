@@ -127,10 +127,11 @@ struct ScaleShiftPostOp {
         bitwise_xor
     };
 
-    ScaleShiftPostOp(const Type m_type, std::vector<float> _scales, std::vector<float> _shifts)
+    ScaleShiftPostOp(const Type m_type, std::vector<float> _scales, std::vector<float> _shifts, bool pythondiv = false)
         : m_type(m_type),
           m_scales(std::move(_scales)),
-          m_shifts(std::move(_shifts)) {}
+          m_shifts(std::move(_shifts)),
+          m_pythondiv(pythondiv) {}
 
     [[nodiscard]] const std::vector<float>& scales() const {
         return m_scales;
@@ -144,10 +145,15 @@ struct ScaleShiftPostOp {
         return m_type;
     }
 
+    [[nodiscard]] bool pythondiv() const {
+        return m_pythondiv;
+    }
+
 private:
     const Type m_type;
     const std::vector<float> m_scales;
     const std::vector<float> m_shifts;
+    const bool m_pythondiv;
 };
 
 struct FakeQuantizePostOp {

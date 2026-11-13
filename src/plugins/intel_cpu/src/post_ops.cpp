@@ -405,7 +405,8 @@ PostOps getPostOps(const std::vector<NodePtr>& fused, ov::element::Type_t sumDat
     auto makeScaleShiftPostOp = [](const std::shared_ptr<node::Eltwise>& eltwise) {
         return std::make_any<ScaleShiftPostOp>(convertToScaleShiftOpt(eltwise->getAlgorithm()),
                                                eltwise->getScales(),
-                                               eltwise->getShifts());
+                                               eltwise->getShifts(),
+                                               eltwise->attrs().data.pythondiv);
     };
 
     auto makeSumPostOp = [&](const std::shared_ptr<node::Eltwise>& eltwise) {

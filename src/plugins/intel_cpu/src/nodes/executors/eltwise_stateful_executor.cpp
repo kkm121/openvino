@@ -99,8 +99,12 @@ EltwiseStatefulExecutor::EltwiseStatefulExecutor(EltwiseAttrs attrs,
                                                             eltwise->beta(),
                                                             eltwise->gamma()});
             } else if (const auto* eltwise = std::any_cast<ScaleShiftPostOp>(&po)) {
-                m_shapeAgnosticData.eltwise_data.push_back(
-                    {convertToEltwiseAlgorithm(eltwise->type()), dnnl::algorithm::undef, 0, 0, 0});
+                m_shapeAgnosticData.eltwise_data.push_back({convertToEltwiseAlgorithm(eltwise->type()),
+                                                            dnnl::algorithm::undef,
+                                                            0,
+                                                            0,
+                                                            0,
+                                                            eltwise->pythondiv()});
             } else {
                 OPENVINO_THROW("has unexpected fused op");
             }
